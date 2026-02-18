@@ -361,7 +361,7 @@ class CarWashBot:
         await update.message.reply_text(confirmation_text, reply_markup=reply_markup)
         return CONFIRM_BOOKING
 
-    async def send_admin_notification(self, user_id: int, user_name: str, booking_data: dict):
+    async def send_admin_notification(self, user_id: int, user_name: str, booking_data: dict, context: ContextTypes.DEFAULT_TYPE):
         """Отправить уведомление администратору о новой записи"""
         if not ADMIN_USER_ID or ADMIN_USER_ID == 0:
             logger.warning("ADMIN_USER_ID не установлен, уведомление не отправлено")
@@ -381,12 +381,12 @@ class CarWashBot:
                 f"📅 <b>Дата:</b> {day_name}, {date_formatted}\n"
                 f"⏰ <b>Время:</b> {booking_data['booking_time']}\n"
             )
-            await app.bot.send_message(chat_id=ADMIN_USER_ID, text=notification_text, parse_mode='HTML')
+            await context.bot.send_message(chat_id=ADMIN_USER_ID, text=notification_text, parse_mode='HTML')
             logger.info(f"✅ Уведомление отправлено администратору о записи пользователя {user_id}")
         except Exception as e:
             logger.error(f"❌ Ошибка при отправке уведомления администратору: {e}")
 
-    async def send_admin_cancellation_notification(self, user_id: int, user_name: str, booking_data: dict):
+    async def send_admin_cancellation_notification(self, user_id: int, user_name: str, booking_data: dict, context: ContextTypes.DEFAULT_TYPE):
         """Отправить уведомление администратору об отмене записи"""
         if not ADMIN_USER_ID or ADMIN_USER_ID == 0:
             logger.warning("ADMIN_USER_ID не установлен, уведомление об отмене не отправлено")
@@ -406,7 +406,7 @@ class CarWashBot:
                 f"📅 <b>Дата:</b> {day_name}, {date_formatted}\n"
                 f"⏰ <b>Время:</b> {booking_data['booking_time']}\n"
             )
-            await app.bot.send_message(chat_id=ADMIN_USER_ID, text=notification_text, parse_mode='HTML')
+            await context.bot.send_message(chat_id=ADMIN_USER_ID, text=notification_text, parse_mode='HTML')
             logger.info(f"✅ Уведомление об отмене отправлено администратору о пользователе {user_id}")
         except Exception as e:
             logger.error(f"❌ Ошибка при отправке уведомления об отмене администратору: {e}")
@@ -455,7 +455,8 @@ class CarWashBot:
                     'car_body_name': context.user_data['car_body_name'],
                     'wash_type_name': context.user_data['wash_type_name'],
                     'phone': context.user_data['phone']
-                }
+                },
+                context=context
             )
         else:
             await query.edit_message_text("❌ Ошибка при создании записи. Это время уже занято. Пожалуйста, выберите другое время.")
@@ -571,7 +572,8 @@ class CarWashBot:
                     'car_body_name': CAR_BODY_TYPES.get(booking['car_body_type'], 'Неизвестно'),
                     'wash_type_name': WASH_TYPES.get(booking['wash_type'], 'Неизвестно'),
                     'phone': booking['phone']
-                }
+                },
+                context=context
             )
 
         db.cancel_booking(booking_id, query.from_user.id)
@@ -646,7 +648,8 @@ def main():
         db.remove_expired_bookings()
 
     # Запуск проверки каждые 60 минут
-        application.job_queue.run_repeating(cleanup_old_bookings, interval=3600, first=10)
+    application.job_queue.run_repeating(cleanup_old_bookings, interval=3600, first=10)
+    
     application.run_polling()
 
 
