@@ -106,9 +106,12 @@ class Database:
         available_dates = []
         today = datetime.now().date()
         
-        # Изменено: начинаем с 0 (сегодня), а не с 1 (завтра)
-        for i in range(0, DAYS_AHEAD + 1):
+        for i in range(0, DAYS_AHEAD):
             date = today + timedelta(days=i)
+            
+            # Пропускаем понедельники
+            if date.weekday() == 0:  # 0 - понедельник
+                continue
             
             # Проверяем, есть ли свободные слоты в этот день
             cursor.execute('''
